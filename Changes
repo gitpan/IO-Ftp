@@ -7,3 +7,8 @@ Revision history for Perl extension IO::Ftp.
 	- added README
 	- removed redundant 'our' statement  (thanks Ben!)
 	- added more POD
+
+0.03  Wed Aug 27 2003
+	- Handle leading // for absolute path
+	- let URI handle port default
+

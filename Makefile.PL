@@ -6,7 +6,7 @@ WriteMakefile(
     'VERSION_FROM'	=> 'Ftp.pm', # finds $VERSION
     'PREREQ_PM'		=> {
 	    File::Basename	=> 2.6,
-		URI						=> 1.23,
+		URI						=> 1.25,
 		Symbol				=> 1.02,
 		Net::FTP				=> 2.67,
     },

@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 
 use vars qw/$VERSION/;
 
-$VERSION = 0.02;
+$VERSION = 0.03;
 our %EXPORT_TAGS = ( 'all' => [ qw(
 		new	
 		delete
@@ -51,7 +51,7 @@ sub new {
 	} else {		
 		$ftp = Net::FTP->new(
 			$uri->host, 
-			Port => ($uri->port || 80),
+			Port => $uri->port,
 			Debug => $args{DEBUG},
 			Timeout => $args{Timeout},
 			BlockSize => $args{BlockSize},
@@ -78,13 +78,27 @@ sub __open {
 	my $id = $uri->user || 'anonymous';
 	my $pwd = $uri->password || 'anon@anon.org';
 	
-	$ftp->login($id, $pwd);
+	unless ($ftp->login($id, $pwd)) {
+		warn "Can't login: ", $ftp->message;
+		return;
+	}
+	
 	fileparse_set_fstype($args{OS}) if $args{OS};
 	
 	my ($file, $path) = fileparse($uri->path);
 	warn "File: $file, Path: $path" if $args{DEBUG};
-	
-	foreach ('/', split '/', $path) {
+
+	if ($path =~ m{^//(.*)}) {		# initial single / is relative path, // is absolute	
+		$path = $1;
+		warn "cwd /" if $args{DEBUG};
+		unless ($ftp->cwd('/')) {
+			warn "Can't cwd to /";
+			return;
+		}
+	}
+			
+	foreach (split '/', $path) {
+		warn "cwd $_" if $args{DEBUG};
 		unless ($ftp->cwd($_)) {
 			warn "Can't cwd to $_";
 			return;
