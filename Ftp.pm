@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 
 use vars qw/$VERSION/;
 
-$VERSION = 0.03;
+$VERSION = 0.05;
 our %EXPORT_TAGS = ( 'all' => [ qw(
 		new	
 		delete
@@ -39,7 +39,16 @@ sub new {
 		return;
 	}
 
-	my $uri = URI->new('ftp:' . $uri_string);
+	my $uri;
+	if (ref $uri_string) {
+		unless ($uri_string->isa('URI')) {
+			carp "can' t make a URI from a ", ref $uri_string;
+			return;
+		}
+		$uri = $uri_string;
+	} else {
+		$uri = URI->new('ftp:' . $uri_string);
+	}
 
 	my $ftp;
 	if (ref $src and not $uri->host) {
@@ -68,6 +77,7 @@ sub new {
 	return unless $self;
 	
 	${*$self}{'io_ftp_ftp'} = $ftp;
+	${*$self}{'io_ftp_uri'} = $uri;
 
 	return bless $self, $class;
 }
@@ -98,6 +108,7 @@ sub __open {
 	}
 			
 	foreach (split '/', $path) {
+		next unless $_;		#ignore embedded back-to-back /.  else will cwd with no parm, which will default to 'cwd /'
 		warn "cwd $_" if $args{DEBUG};
 		unless ($ftp->cwd($_)) {
 			warn "Can't cwd to $_";
@@ -105,7 +116,8 @@ sub __open {
 		}
 	}
 	if ($args{type}) {
-		unless ($args{type} =~ /^[ai]$/i) {
+		$args{type} = uc $args{type};
+		unless ($args{type} =~ /^[AI]$/) {
 			carp "Invalid type: $args{type}";
 			return;
 		}
@@ -145,6 +157,7 @@ sub __open {
 	push @ISA, ref $dataconn;
 	
 	${*$dataconn}{'io_ftp_file'} = $file;
+	${*$dataconn}{'io_ftp_path'} = $path;
 	${*$dataconn}{'io_ftp_size'} = $size;
 	${*$dataconn}{'io_ftp_mdtm'} = $mdtm;
 	
@@ -161,7 +174,17 @@ sub __find_file {
 
 sub filename {
 	my $self = shift;
-	return ${*$self}{'io_ftp_file'};	
+	return ${*$self}{'io_ftp_file'};
+}
+
+sub path {
+	my $self = shift;
+	return ${*$self}{'io_ftp_path'};
+}
+
+sub uri {
+	my $self = shift;
+	return ${*$self}{'io_ftp_uri'};
 }
 
 ### allow shortcuts to Net::FTP's rename and delete, but only if data connection not open.  OTW we'll hang.
