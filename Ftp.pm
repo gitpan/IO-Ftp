@@ -8,9 +8,9 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 
-use vars qw/@ISA $VERSION/;
+use vars qw/$VERSION/;
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 our %EXPORT_TAGS = ( 'all' => [ qw(
 		new	
 		delete
@@ -200,7 +200,6 @@ IO::Ftp - A simple interface to Net::FTP's socket level get/put
  
  my $out = IO::Ftp->new('>','//user:pwd@foo.bar.com/foo/bar/fu.bar', TYPE=>'a');
  my $in = IO::Ftp->new('<','//foo.bar.com/foo/bar/fu.bar', TYPE=>'a');	#anon access example
-
   
  while (<$in>) {
  	s/foo/bar/g;
@@ -210,7 +209,8 @@ IO::Ftp - A simple interface to Net::FTP's socket level get/put
  close $in;
  close $out;
 
- ---
+
+### for something along the lines of 'mget': 
  
 while (my $in = IO::Ftp->new('<<','//foo.bar.com/foo/bar/*.txt', TYPE=>'a') {
 	print "processing ",$in->filename, "\n";
@@ -222,10 +222,7 @@ while (my $in = IO::Ftp->new('<<','//foo.bar.com/foo/bar/*.txt', TYPE=>'a') {
 
 =head1 DESCRIPTION
 
-Blah blah blah.
-
-
-=head2 EXPORT
+=head2 EXPORTS
 
 None by default.
 
@@ -236,10 +233,87 @@ L<File::Basename>
 L<URI>
 L<Symbol>
 
+
+=head1 CONSTRUCTOR
+
+=over 4
+
+=item new (  MODE, URI [,OPTIONS] )
+
+C<MODE> indicates the FTP command to use, and is one of
+
+=over 4
+
+=item <		get
+
+=item >		put
+
+=item >>	append
+
+=item <<	get with wildcard match.  This allows fetching a file when the name is not known, 
+or is partially known.  Wildcarding is as performed by Net::FTP::ls.  If more than one file matches,
+the same one will always be returned.  To process a number of files, they must be deleted 
+or renamed to not match the wildcard.
+
+=back
+
+C<URI> is an FTP format URI without the leading 'ftp:'.
+C<OPTIONS> are passed in hash format, and can be one or more of
+
+=over 4
+
+=item TYPE		force ASCII (a) or binary (i) mode for the transfer.
+
+=item DEBUG	Enables debug messages.  Also enabled Net::FTP's Debug flag.
+
+=item Timeout	Passed to Net::FTP::new
+
+=item BlockSize	Passed to Net::FTP::new
+
+=item Passive	Passed to Net::FTP::new
+
+=back
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item rename_to (NEW_NAME)
+Renames the file.	
+
+=item delete
+Deletes the file.
+
+=item size	
+Returns the size of the file.
+
+=item mdtm	
+Returns the modification time of the fiile.  
+
+=back
+Note: These methods cannot be performed while the connection is open.  
+rename_to and delete will fail and return undef if used before the socket is closed.
+
+size and mdtm cache their values before the socket is opened.  
+After the socket is closed, they call the Net::FTP methods of the same name.
+
+=head1 CREDITS
+
+Graham Barr for his Net::FTP module, which does all the 'real work'.
+
+tye at PerlMonks
+
+=head1 COPYRIGHT
+
+(c) 2003 Mike Blackwell.  All rights reserved.
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+
 =head1 AUTHOR
 
-Mike Blackwell <maiku41@anet.com>
-
+Mike Blackwell <mikeb@cpan.org>
 
 =head1 SEE ALSO
 
